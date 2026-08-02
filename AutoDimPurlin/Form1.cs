@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Tekla.Structures.Model;
 using Tekla.Structures.Drawing;
 using Tekla.Structures.Geometry3d;
+using TSG = Tekla.Structures.Geometry3d;
 using TSD = Tekla.Structures.Drawing;
 using TSM = Tekla.Structures.Model;
 
@@ -25,6 +26,19 @@ namespace AutoDimPurlin
         private void btnRun_Click(object sender, EventArgs e)
         {
             Model model = new Model();
+
+            //tạo workplanehandler để điều khiển coordinatesystem
+            WorkPlaneHandler workPlaneHandler = model.GetWorkPlaneHandler();
+
+            //lấy hệ trục tọa độ hiện hành
+            TransformationPlane current = workPlaneHandler.GetCurrentTransformationPlane();
+
+            ////khai báo hệ trục tọa độ global
+            //TransformationPlane global = new TransformationPlane();
+
+            ////set workplane về global
+            //workPlaneHandler.SetCurrentTransformationPlane(global);
+
             DrawingHandler drawingHandler = new DrawingHandler();
 
             if (drawingHandler.GetConnectionStatus() == false)
@@ -68,10 +82,29 @@ namespace AutoDimPurlin
                                 StraightDimensionSet.StraightDimensionSetAttributes attributes =
                                     new StraightDimensionSet.StraightDimensionSetAttributes("standard");
 
-                                //thêm 2 diểm vào point list
+                                ////thêm 2 diểm vào point list
+                                ////Tạo matrix để tranform điểm về view coordinate system
+                                //Matrix toViewCoordinateSystem = MatrixFactory.ToCoordinateSystem(view.ViewCoordinateSystem);
+
+                                //////transform min, max từ local về view coords bằng matrix
+                                //TSG.Point minPointInViewCoors = toViewCoordinateSystem.Transform(solid.MinimumPoint);
+                                //TSG.Point maxPointInViewCoords = toViewCoordinateSystem.Transform(solid.MaximumPoint);
+
+                                //tạo matrix chuyển điểm từ local coords về global
+                                Matrix fromLocalToGlobal = current.TransformationMatrixToGlobal;
+
+                                //tạo matrix chuyển từ global về view coords
+                                Matrix toViewCoords = MatrixFactory.ToCoordinateSystem(view.ViewCoordinateSystem);
+
+                                TSG.Point minInGlobalCoords = fromLocalToGlobal.Transform(solid.MinimumPoint);
+                                TSG.Point minPointInViewCoords = toViewCoords.Transform(minInGlobalCoords);
+
+                                TSG.Point maxInGlobalCoords = fromLocalToGlobal.Transform(solid.MaximumPoint);
+                                TSG.Point maxPointInViewCoords = toViewCoords.Transform(maxInGlobalCoords);
+
                                 PointList pointList = new PointList();
-                                pointList.Add(solid.MinimumPoint);
-                                pointList.Add(solid.MaximumPoint);
+                                pointList.Add(minPointInViewCoords);
+                                pointList.Add(maxPointInViewCoords);
 
                                 // tạo vector chỉ hướng dim tổng
                                 Vector vector = new Vector(0, 1, 0);
@@ -94,6 +127,10 @@ namespace AutoDimPurlin
                     }
                 }
             }
+
+            ////trả workplane về lại cho người dùng
+            //workPlaneHandler.SetCurrentTransformationPlane(current);
+            model.CommitChanges();
         }
     }
 }
