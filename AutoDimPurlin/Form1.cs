@@ -33,11 +33,11 @@ namespace AutoDimPurlin
             //lấy hệ trục tọa độ hiện hành
             TransformationPlane current = workPlaneHandler.GetCurrentTransformationPlane();
 
-            ////khai báo hệ trục tọa độ global
-            //TransformationPlane global = new TransformationPlane();
+            //khai báo hệ trục tọa độ global
+            TransformationPlane global = new TransformationPlane();
 
-            ////set workplane về global
-            //workPlaneHandler.SetCurrentTransformationPlane(global);
+            //set workplane về global
+            workPlaneHandler.SetCurrentTransformationPlane(global);
 
             DrawingHandler drawingHandler = new DrawingHandler();
 
@@ -82,25 +82,14 @@ namespace AutoDimPurlin
                                 StraightDimensionSet.StraightDimensionSetAttributes attributes =
                                     new StraightDimensionSet.StraightDimensionSetAttributes("standard");
 
-                                ////thêm 2 diểm vào point list
-                                ////Tạo matrix để tranform điểm về view coordinate system
-                                //Matrix toViewCoordinateSystem = MatrixFactory.ToCoordinateSystem(view.ViewCoordinateSystem);
+                                //thêm 2 diểm vào point list
+                                //Tạo matrix để tranform điểm về view coordinate system
+                                Matrix toViewCoordinateSystem = MatrixFactory.ToCoordinateSystem(view.ViewCoordinateSystem);
 
-                                //////transform min, max từ local về view coords bằng matrix
-                                //TSG.Point minPointInViewCoors = toViewCoordinateSystem.Transform(solid.MinimumPoint);
-                                //TSG.Point maxPointInViewCoords = toViewCoordinateSystem.Transform(solid.MaximumPoint);
+                                ////transform min, max từ local về view coords bằng matrix
+                                TSG.Point minPointInViewCoords = toViewCoordinateSystem.Transform(solid.MinimumPoint);
+                                TSG.Point maxPointInViewCoords = toViewCoordinateSystem.Transform(solid.MaximumPoint);
 
-                                //tạo matrix chuyển điểm từ local coords về global
-                                Matrix fromLocalToGlobal = current.TransformationMatrixToGlobal;
-
-                                //tạo matrix chuyển từ global về view coords
-                                Matrix toViewCoords = MatrixFactory.ToCoordinateSystem(view.ViewCoordinateSystem);
-
-                                TSG.Point minInGlobalCoords = fromLocalToGlobal.Transform(solid.MinimumPoint);
-                                TSG.Point minPointInViewCoords = toViewCoords.Transform(minInGlobalCoords);
-
-                                TSG.Point maxInGlobalCoords = fromLocalToGlobal.Transform(solid.MaximumPoint);
-                                TSG.Point maxPointInViewCoords = toViewCoords.Transform(maxInGlobalCoords);
 
                                 PointList pointList = new PointList();
                                 pointList.Add(minPointInViewCoords);
