@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawingNumbering", "TeklaAP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreateStraightDimension", "CreateStraightDimension\CreateStraightDimension.csproj", "{90B69515-7E83-4780-83DC-8C418E7A4925}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoDimPurlin", "AutoDimPurlin\AutoDimPurlin.csproj", "{56467470-8189-48B7-823E-CF5472F7890D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{90B69515-7E83-4780-83DC-8C418E7A4925}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90B69515-7E83-4780-83DC-8C418E7A4925}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90B69515-7E83-4780-83DC-8C418E7A4925}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56467470-8189-48B7-823E-CF5472F7890D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56467470-8189-48B7-823E-CF5472F7890D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56467470-8189-48B7-823E-CF5472F7890D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56467470-8189-48B7-823E-CF5472F7890D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
