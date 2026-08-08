@@ -33,11 +33,11 @@ namespace AutoDimPurlin
             //lấy hệ trục tọa độ hiện hành
             TransformationPlane current = workPlaneHandler.GetCurrentTransformationPlane();
 
-            //khai báo hệ trục tọa độ global
-            TransformationPlane global = new TransformationPlane();
+            ////khai báo hệ trục tọa độ global
+            //TransformationPlane global = new TransformationPlane();
 
-            //set workplane về global
-            workPlaneHandler.SetCurrentTransformationPlane(global);
+            ////set workplane về global
+            //workPlaneHandler.SetCurrentTransformationPlane(global);
 
             DrawingHandler drawingHandler = new DrawingHandler();
 
