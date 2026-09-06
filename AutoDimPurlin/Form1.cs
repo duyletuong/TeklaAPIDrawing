@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using Tekla.Structures;
 using Tekla.Structures.Drawing;
 using Tekla.Structures.Geometry3d;
 using Tekla.Structures.Model;
@@ -75,16 +77,24 @@ namespace AutoDimPurlin
                     //xử lí dim cho top view
                     else if (view.ViewType is TSD.View.ViewTypes.TopView)
                     {
-                        //XuLiFrontView(view, model, activeDrawing);
+                        AutoShortening(view, drawing);
                     }
                 }
             }
+
+            RunArrangeViewMacro();
+            //AutoArrangeView();
+            //ArrangeView(drawing);
         }
 
         private void XuLiFrontView(TSD.View view, Drawing activeDrawing)
         {
             //xoa dim cu
             DeleteOldDim(view);
+
+            // auto cutpart
+            AutoShortening(view, activeDrawing);
+
             //lấy ModelObjects trong front view
             DrawingObjectEnumerator drawingObjectEnumerator = view.GetModelObjects();
             while (drawingObjectEnumerator.MoveNext())
@@ -99,6 +109,7 @@ namespace AutoDimPurlin
                     CreateOverallVerticalDimension(activeDrawing, view, modelPart);
                     CreateWebHoleVertcalDimension(activeDrawing, view, modelPart);
                     CreateFlangeHoleDimension(activeDrawing, view, modelPart);
+
                     TSD.View section = CreateSection(view, modelPart);
                     CreateSectionDimension(section, modelPart);
 
@@ -513,6 +524,135 @@ namespace AutoDimPurlin
             }
 
             view.Modify();
+        }
+
+        private void AutoShortening(TSD.View View, Drawing activeDrawing)
+        {
+            ContainerView containerView = activeDrawing.GetSheet(); //lay khung ban ve
+            double drawingWidth = containerView.Width;
+
+            double percenViewWidth = double.Parse(txtPercenViewWidth.Text);
+
+            var viewShortening = View.Attributes.Shortening;
+            viewShortening.CutParts = true;
+
+            double targetWidth = drawingWidth * percenViewWidth / 100;
+
+            double lo = 0, hi = 1000;
+            double bestValid = -1;
+
+            // Check biên dưới trước
+            viewShortening.MinimumLength = lo;
+            View.Modify();
+            if (View.Width > targetWidth) return; // cắt max vẫn không đủ
+
+            while (hi - lo > 10)
+            {
+                double mid = (lo + hi) / 2;
+                viewShortening.MinimumLength = mid;
+                View.Modify();
+
+                if (View.Width <= targetWidth)
+                {
+                    bestValid = mid;
+                    lo = mid; // fit rồi, thử tăng thêm (giữ nhiều part hơn)
+                }
+                else
+                {
+                    hi = mid; // vượt ngưỡng, phải giảm xuống
+                }
+            }
+
+            if (bestValid >= 0)
+            {
+                viewShortening.MinimumLength = bestValid;
+                View.Modify();
+            }
+        }
+
+        private void ArrangeView(Drawing drawing)
+        {
+            DrawingObjectEnumerator views = drawing.GetSheet().GetViews();
+
+            while (views.MoveNext())
+            {
+                if (views.Current is TSD.View view)
+                {
+                    Point centerDrawing = GetCenterDrawing(drawing);
+                    if (view.ViewType == TSD.View.ViewTypes.FrontView)
+                    {
+                        Point offsetFrontView = new Point(centerDrawing.X, centerDrawing.Y + view.Height/2);
+                        MoveViewCenterTo(view, offsetFrontView);
+                    }
+                    else if (view.ViewType == TSD.View.ViewTypes.TopView)
+                    {
+                        Point offsetTopView = new Point(centerDrawing.X, centerDrawing.Y - view.Height / 2);
+                        MoveViewCenterTo(view, offsetTopView);
+                    }
+                    else if (view.ViewType == TSD.View.ViewTypes.SectionView)
+                    {
+                        MoveViewCenterTo(view, new Point(centerDrawing.X, 80));
+                    }
+                }
+            }
+        }
+
+        private bool AutoArrangeView()
+        {
+            return TSM.Operations.Operation
+                .RunMacro(CreateArrangeViewFile());
+        }
+
+        public string CreateArrangeViewFile()
+        {
+            Model model = new Model();
+            string folderPath = model.GetInfo().ModelPath +  @"\macros\drawings";
+            string filePath = Path.Combine(folderPath, "ArrangeView.cs");
+            
+            // Tạo thư mục nếu chưa tồn tại
+            Directory.CreateDirectory(folderPath);
+
+            string content = @"namespace UserMacros {
+                                public sealed class Macro {
+                                    [Tekla.Macros.Runtime.MacroEntryPointAttribute()]
+                                    public static void Run(Tekla.Macros.Runtime.IMacroRuntime runtime) {
+                                        Tekla.Macros.Akit.IAkitScriptHost akit = runtime.Get<Tekla.Macros.Akit.IAkitScriptHost>();
+                                        akit.Callback(""acmd_place_drawing_views"", """", ""View_10 window_1"");
+                                    }
+                                }
+                            }";
+
+            File.WriteAllText(filePath, content);
+
+            return filePath;
+        }
+
+        private void RunArrangeViewMacro()
+        {
+            if (TeklaStructures.Connect())
+            {
+                MacroBuilder macroBuilder = new MacroBuilder();
+                macroBuilder.Callback("acmd_place_drawing_views", "", "View_10 window_1");
+                macroBuilder.ValueChange("view_dial", "gr_view_size_mode", "1");
+                macroBuilder.PushButton("view_modify", "view_dial");
+                macroBuilder.Run();
+            }
+        }
+
+        protected void MoveViewCenterTo(TSD.ViewBase target, Point newPosition)
+        {
+            target.Origin = new Point(-target.FrameOrigin.X - target.Width / 2 + newPosition.X,
+                                      -target.FrameOrigin.Y - target.Height / 2 + newPosition.Y);
+            target.Modify();
+        }
+
+        private Point GetCenterDrawing(Drawing drawing)
+        {
+            ContainerView containerView = drawing.GetSheet();
+
+            Point center = new Point(containerView.Width/2, containerView.Height/2);
+
+            return center;
         }
 
         private void button1_Click(object sender, EventArgs e)
